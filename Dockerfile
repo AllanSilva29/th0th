@@ -11,7 +11,7 @@ COPY package.json bun.lock turbo.json tsconfig.json bunfig.toml ./
 
 # Copia workspaces
 COPY packages ./packages
-COPY apps/tools-api ./apps/tools-api
+COPY apps ./apps
 
 # Instala dependências
 RUN bun install
