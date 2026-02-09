@@ -1,8 +1,8 @@
-# Usa imagem oficial do Bun
-FROM oven/bun:1.2.0-alpine
+# Usa imagem oficial do Bun mais recente
+FROM oven/bun:1.3-alpine
 
-# Instala dependências necessárias
-RUN apk add --no-cache nodejs
+# Instala Node.js 22.x (required by Prisma)
+RUN apk add --no-cache nodejs-current
 
 WORKDIR /app
 
@@ -13,6 +13,9 @@ COPY apps ./apps
 
 # Instala dependências
 RUN bun install
+
+# Build do projeto
+RUN bun run build
 
 # Variáveis de ambiente padrão
 ENV NODE_ENV=production
