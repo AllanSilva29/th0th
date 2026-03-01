@@ -10,8 +10,6 @@
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -22,6 +20,6 @@
     "isolatedModules": true,
     "allowImportingTsExtensions": false
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests", "src/test-kimi-integration.ts"]
+  "include": [],
+  "exclude": ["node_modules", "dist", "apps", "packages"]
 }

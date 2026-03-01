@@ -1,53 +1,189 @@
-# 🏛️ th0th MCP - Clean Refactored Version
+# th0th
 
 **Ancient knowledge keeper for modern code**
 
-This is the **clean, refactored version** of th0th MCP server, containing only the modern monorepo structure without legacy code.
+Semantic search with 98% token reduction for AI assistants.
 
 ---
 
-## 📁 Project Structure
+## Architecture
 
 ```
-th0thMCP/
+th0th/
 ├── apps/
-│   ├── mcp-client/        # MCP Protocol Server (stdio)
-│   │   └── dist/index.js  # Built MCP server
-│   └── tools-api/         # REST API (port 3333)
-│       └── dist/index.js  # Built API server
+│   ├── mcp-client/           # MCP Server (stdio) - Claude Desktop, OpenCode
+│   │   └── src/
+│   ├── tools-api/            # REST API (port 3333) - standalone/plugin
+│   │   ├── src/
+│   │   │   ├── routes/
+│   │   │   └── middleware/
+│   │   └── data/
+│   └── opencode-plugin/      # OpenCode-specific plugin
+│       └── src/
 ├── packages/
-│   ├── core/              # Core business logic
-│   │   ├── services/      # Search, cache, embeddings, compression
-│   │   ├── models/        # Data models
-│   │   └── tools/         # MCP tool implementations
-│   └── shared/            # Shared utilities, types, config
-├── docs/                  # Documentation
-├── test_final_integration.mjs
-├── package.json           # Monorepo root config
-└── turbo.json             # Turborepo configuration
+│   ├── core/                 # Core business logic
+│   │   ├── src/
+│   │   │   ├── services/     # Search, cache, embeddings, compression
+│   │   │   ├── models/       # Data models
+│   │   │   ├── tools/        # MCP tool implementations
+│   │   │   ├── data/         # Data access layer
+│   │   │   └── scripts/      # Utility scripts
+│   │   └── prisma/           # Database schema & migrations
+│   └── shared/               # Shared utilities & types
+│       └── src/
+│           ├── types/
+│           ├── utils/
+│           └── config/
+├── scripts/
+│   └── setup-local-first.sh  # 100% offline setup
+└── docs/
+    └── architecture/
 ```
-
-### 🗑️ What was removed?
-
-The old `/projetos/th0th` contained legacy code in `src/` that was replaced by the monorepo structure. This clean version **only contains**:
-- ✅ `apps/` - Modern application structure
-- ✅ `packages/` - Modular core packages
-- ✅ Documentation and tests
-- ❌ Old `src/` directory (removed)
-- ❌ Legacy server files (removed)
 
 ---
 
-## 🚀 Quick Start
+## How It Works
 
-### 1. Install Dependencies
+### Core Components
+
+| Component | Description |
+|-----------|-------------|
+| **Semantic Search** | Hybrid search (vector + keyword) with RRF (Reciprocal Rank Fusion) |
+| **Embeddings** | Ollama local models (nomic-embed-text, bge-m3) or Mistral API |
+| **Compression** | Rule-based code structure extraction (70-98% token reduction) |
+| **Memory** | Hierarchical persistent storage (SQLite) for context across sessions |
+| **Cache** | Multi-level L1/L2 cache with TTL for frequently accessed queries |
+
+### Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `th0th_index` | Index a project directory for semantic search |
+| `th0th_search` | Semantic + keyword search with filters |
+| `th0th_remember` | Store important information in persistent memory |
+| `th0th_recall` | Search stored memories from previous sessions |
+| `th0th_compress` | Compress context (keeps structure, removes details) |
+| `th0th_optimized_context` | Search + compress in one call (max token efficiency) |
+| `th0th_analytics` | Usage patterns, cache performance, metrics |
+
+---
+
+## Usage Examples
+
+### 1. Index a Project
 
 ```bash
-cd /home/joaov/projetos/th0thMCP
+# Via MCP tool
+th0th_index({
+  projectPath: "/home/user/my-project",
+  projectId: "my-project",
+  forceReindex: false,
+  warmCache: true
+})
+```
+
+### 2. Semantic Search
+
+```bash
+# Search for code patterns
+th0th_search({
+  query: "authentication middleware JWT validation",
+  projectId: "my-project",
+  maxResults: 10,
+  minScore: 0.3,
+  responseMode: "summary",  # 70% token savings
+  include: ["src/**/*.ts"],
+  exclude: ["**/*.test.*"]
+})
+```
+
+### 3. Store & Recall Memories
+
+```bash
+# Store important decisions
+th0th_remember({
+  content: "Using PostgreSQL for user data, Redis for sessions",
+  type: "decision",
+  projectId: "my-project",
+  importance: 0.8,
+  tags: ["database", "architecture"]
+})
+
+# Recall later
+th0th_recall({
+  query: "what database are we using?",
+  types: ["decision"],
+  projectId: "my-project"
+})
+```
+
+### 4. Context Compression
+
+```bash
+# Compress large code files
+th0th_compress({
+  content: "... 5000 lines of code ...",
+  strategy: "code_structure",  # Keeps imports, signatures, exports
+  targetRatio: 0.7             # 70% reduction
+})
+```
+
+### 5. Optimized Context (Search + Compress)
+
+```bash
+# One call for maximum efficiency
+th0th_optimized_context({
+  query: "how does authentication work?",
+  projectId: "my-project",
+  maxTokens: 4000,
+  maxResults: 5
+})
+```
+
+### Compression Strategies
+
+| Strategy | Use Case | Reduction |
+|----------|----------|-----------|
+| `code_structure` | Source code | 70-90% |
+| `conversation_summary` | Chat history | 80-95% |
+| `semantic_dedup` | Repetitive content | 50-70% |
+| `hierarchical` | Structured docs | 60-80% |
+
+---
+
+## MCP vs OpenCode Plugin
+
+| Feature | MCP Server | OpenCode Plugin |
+|---------|------------|-----------------|
+| **Protocol** | Model Context Protocol (stdio) | REST API HTTP |
+| **Usage** | Claude Desktop, OpenCode, other MCP clients | OpenCode only |
+| **Execution** | `start:mcp` - child process via stdio | `start:api` - HTTP server :3333 |
+| **Config** | `opencode.json` with `command` | `opencode.json` with `url` |
+| **Advantage** | Universal standard, multi-client | Simpler for OpenCode |
+| **Disadvantage** | Communication via stdin/stdout only | Limited to OpenCode |
+
+---
+
+## Installation
+
+### 1. Clone and install dependencies
+
+```bash
+git clone <repo-url>
+cd th0th
 bun install
 ```
 
-### 2. Configure Environment
+### 2. Configure environment
+
+**Option A: Local-First (100% offline, recommended)**
+
+```bash
+./scripts/setup-local-first.sh
+# This sets up Ollama, downloads embedding models, and creates .env
+```
+
+**Option B: With external APIs (Mistral, etc.)**
 
 ```bash
 cp .env.example .env
@@ -60,48 +196,139 @@ cp .env.example .env
 bun run build
 ```
 
-### 4. Start API Server (Required!)
+---
+
+## Running
+
+### REST API (port 3333)
 
 ```bash
+# Development (hot reload)
+bun run dev:api
+
+# Production
 bun run start:api
-# API runs on http://localhost:3333
 ```
 
-### 5. Configure OpenCode
+Verify: `curl http://localhost:3333/health`
 
-Location: `/home/joaov/.config/opencode/opencode.json`
+### API Endpoints (curl examples)
 
-```json
-{
-  "th0th": {
-    "type": "local",
-    "command": [
-      "bun",
-      "run",
-      "/home/joaov/projetos/th0thMCP/apps/mcp-client/dist/index.js"
-    ],
-    "environment": {
-      "MISTRAL_API_KEY": "your-key",
-      "RLM_LLM_ENABLED": "true"
-    },
-    "enabled": true
-  }
-}
+```bash
+# Health check
+curl http://localhost:3333/health
+
+# Index a project
+curl -X POST http://localhost:3333/api/v1/project/index \
+  -H "Content-Type: application/json" \
+  -d '{"projectPath": "/home/user/my-project", "projectId": "my-project"}'
+
+# Search
+curl -X POST http://localhost:3333/api/v1/search/project \
+  -H "Content-Type: application/json" \
+  -d '{"query": "authentication", "projectId": "my-project"}'
+
+# Store memory
+curl -X POST http://localhost:3333/api/v1/memory/store \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Important decision...", "type": "decision"}'
+
+# Compress context
+curl -X POST http://localhost:3333/api/v1/context/compress \
+  -H "Content-Type: application/json" \
+  -d '{"content": "...", "strategy": "code_structure"}'
+```
+
+Swagger docs: `http://localhost:3333/swagger`
+
+### MCP Server (stdio)
+
+```bash
+# Development (watch)
+bun run dev:mcp
+
+# Production
+bun run start:mcp
 ```
 
 ---
 
-## 🧪 Testing
+## Configuring OpenCode
 
-```bash
-node test_final_integration.mjs
-# Expected: 7/7 tests passing
+File: `~/.config/opencode/opencode.json`
+
+### Option 1: Via MCP (recommended)
+
+```json
+{
+  "mcpServers": {
+    "th0th": {
+      "type": "local",
+      "command": ["bun", "run", "/path/to/th0th/apps/mcp-client/src/index.ts"],
+      "enabled": true
+    }
+  }
+}
 ```
 
-## 📈 BEIR Benchmark
+**Requirements:**
+- REST API must be running (`bun run start:api`)
+- MCP client communicates with the API via HTTP internally
 
-Run retrieval benchmark with a BEIR dataset folder extracted locally
-(must contain `corpus.jsonl`, `queries.jsonl`, `qrels/test.tsv`):
+### Option 2: Via Plugin (REST)
+
+```json
+{
+  "plugins": {
+    "th0th": {
+      "type": "remote",
+      "url": "http://localhost:3333",
+      "enabled": true
+    }
+  }
+}
+```
+
+**Requirements:**
+- Only REST API running (`bun run start:api`)
+
+---
+
+## Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `bun run build` | Build all packages |
+| `bun run dev` | Development (all apps) |
+| `bun run dev:api` | REST API with hot reload |
+| `bun run dev:mcp` | MCP server with watch |
+| `bun run start:api` | Start REST API in production |
+| `bun run start:mcp` | Start MCP server in production |
+| `bun run test` | Run tests |
+| `bun run lint` | Lint code |
+| `bun run type-check` | Type checking |
+
+---
+
+## Local-First Mode (100% Offline)
+
+The script `./scripts/setup-local-first.sh` configures:
+
+1. **Ollama** - Installs and starts if needed
+2. **Embedding models** - Downloads `nomic-embed-text` or configured model
+3. **Data directories** - Creates `~/.rlm/`
+4. **Environment variables** - Copies `.env.local-first` to `.env`
+
+**Local mode features:**
+- Embeddings: Ollama (nomic-embed-text, bge-m3, etc.)
+- Compression: Rule-based (no LLM)
+- Cache: Local SQLite
+- Vector DB: Local SQLite
+- Cost: $0
+
+---
+
+## BEIR Benchmark
 
 ```bash
 bun run bench:beir -- \
@@ -111,19 +338,12 @@ bun run bench:beir -- \
   --k 10 \
   --maxQueries 300
 ```
+---
 
-Useful options:
-- `--forceReindex false` to reuse existing index
-- `--minScore 0.0` to avoid filtering relevant docs
-- `--keepTemp true` to inspect generated temporary corpus files
+## License
+
+MIT
 
 ---
 
-## 📚 Documentation
-
-- **COMPLETION_SUMMARY.md** - Implementation summary
-- **docs/** - Detailed documentation
-
----
-
-🏛️ **th0th** - 98.7% token reduction for AI assistants
+**th0th** - Intelligent semantic search for code
