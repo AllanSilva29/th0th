@@ -60,13 +60,13 @@ th0th/
 
 | Tool | Description |
 |------|-------------|
-| `th0th_index` | Index a project directory for semantic search |
-| `th0th_search` | Semantic + keyword search with filters |
-| `th0th_remember` | Store important information in persistent memory |
-| `th0th_recall` | Search stored memories from previous sessions |
-| `th0th_compress` | Compress context (keeps structure, removes details) |
-| `th0th_optimized_context` | Search + compress in one call (max token efficiency) |
-| `th0th_analytics` | Usage patterns, cache performance, metrics |
+| `th0th:index` | Index a project directory for semantic search |
+| `th0th:search` | Semantic + keyword search with filters |
+| `th0th:remember` | Store important information in persistent memory |
+| `th0th:recall` | Search stored memories from previous sessions |
+| `th0th:compress` | Compress context (keeps structure, removes details) |
+| `th0th:optimized_context` | Search + compress in one call (max token efficiency) |
+| `th0th:analytics` | Usage patterns, cache performance, metrics |
 
 ---
 
@@ -76,7 +76,7 @@ th0th/
 
 ```bash
 # Via MCP tool
-th0th_index({
+th0th:index({
   projectPath: "/home/user/my-project",
   projectId: "my-project",
   forceReindex: false,
@@ -88,7 +88,7 @@ th0th_index({
 
 ```bash
 # Search for code patterns
-th0th_search({
+th0th:search({
   query: "authentication middleware JWT validation",
   projectId: "my-project",
   maxResults: 10,
@@ -103,7 +103,7 @@ th0th_search({
 
 ```bash
 # Store important decisions
-th0th_remember({
+th0th:remember({
   content: "Using PostgreSQL for user data, Redis for sessions",
   type: "decision",
   projectId: "my-project",
@@ -112,7 +112,7 @@ th0th_remember({
 })
 
 # Recall later
-th0th_recall({
+th0th:recall({
   query: "what database are we using?",
   types: ["decision"],
   projectId: "my-project"
@@ -123,7 +123,7 @@ th0th_recall({
 
 ```bash
 # Compress large code files
-th0th_compress({
+th0th:compress({
   content: "... 5000 lines of code ...",
   strategy: "code_structure",  # Keeps imports, signatures, exports
   targetRatio: 0.7             # 70% reduction
@@ -134,7 +134,7 @@ th0th_compress({
 
 ```bash
 # One call for maximum efficiency
-th0th_optimized_context({
+th0th:optimized_context({
   query: "how does authentication work?",
   projectId: "my-project",
   maxTokens: 4000,
@@ -257,9 +257,35 @@ bun run start:mcp
 
 ## Configuring OpenCode
 
+### After npm install (recommended)
+
+**Via MCP Server:**
+
+```json
+{
+  "mcpServers": {
+    "th0th": {
+      "type": "local",
+      "command": ["npx", "@th0th/mcp-client"],
+      "enabled": true
+    }
+  }
+}
+```
+
+**Via Plugin:**
+
+```json
+{
+  "plugin": ["@th0th/opencode-plugin"]
+}
+```
+
+### From source
+
 File: `~/.config/opencode/opencode.json`
 
-### Option 1: Via MCP (recommended)
+**Option 1: Via MCP (recommended)**
 
 ```json
 {
@@ -273,11 +299,7 @@ File: `~/.config/opencode/opencode.json`
 }
 ```
 
-**Requirements:**
-- REST API must be running (`bun run start:api`)
-- MCP client communicates with the API via HTTP internally
-
-### Option 2: Via Plugin (REST)
+**Option 2: Via Plugin (REST)**
 
 ```json
 {
@@ -291,8 +313,107 @@ File: `~/.config/opencode/opencode.json`
 }
 ```
 
-**Requirements:**
-- Only REST API running (`bun run start:api`)
+---
+
+## Configuration
+
+Config file: `~/.config/th0th/config.json`
+
+### Automatic Setup (Zero Config)
+
+th0th auto-configures on first run with **Ollama** (local, free):
+
+```json
+// Just add to opencode.json - config is created automatically
+{
+  "mcpServers": {
+    "th0th": {
+      "type": "local",
+      "command": ["npx", "@th0th/mcp-client"],
+      "enabled": true
+    }
+  }
+}
+```
+
+Or via plugin:
+
+```json
+{
+  "plugin": ["@th0th/opencode-plugin"]
+}
+```
+
+On first run, th0th creates `~/.config/th0th/config.json` with Ollama defaults.
+
+### Manual Setup
+
+```bash
+# Initialize with Ollama (local, free)
+npx th0th-config init
+
+# Or with Mistral
+npx th0th-config init --mistral your-api-key
+
+# Or with OpenAI
+npx th0th-config init --openai your-api-key
+```
+
+### Switch Provider
+
+```bash
+# Use Ollama with different model
+npx th0th-config use ollama --model bge-m3:latest
+
+# Switch to Mistral
+npx th0th-config use mistral --api-key your-key
+
+# Switch to OpenAI
+npx th0th-config use openai --api-key your-key
+
+# Show current config
+npx th0th-config show
+
+# Show config path
+npx th0th-config path
+```
+
+### Config File Structure
+
+`~/.config/th0th/config.json`:
+
+```json
+{
+  "embedding": {
+    "provider": "ollama",
+    "model": "nomic-embed-text:latest",
+    "baseURL": "http://localhost:11434",
+    "dimensions": 768
+  },
+  "compression": {
+    "enabled": true,
+    "strategy": "code_structure",
+    "targetRatio": 0.7
+  },
+  "cache": {
+    "enabled": true,
+    "l1MaxSizeMB": 100,
+    "l2MaxSizeMB": 500
+  },
+  "logging": {
+    "level": "info",
+    "enableMetrics": false
+  }
+}
+```
+
+### Providers
+
+| Provider | Model | Cost | Quality |
+|----------|-------|------|---------|
+| **Ollama** (default) | nomic-embed-text, bge-m3 | Free | Good |
+| **Mistral** | mistral-embed, codestral-embed | $$ | Great |
+| **OpenAI** | text-embedding-3-small | $$ | Great |
 
 ---
 
@@ -312,16 +433,117 @@ File: `~/.config/opencode/opencode.json`
 
 ---
 
+## Docker
+
+### Quick Start
+
+```bash
+# Start API + MCP
+docker compose up -d
+
+# API only
+docker compose up -d api
+
+# Check health
+curl http://localhost:3333/health
+```
+
+### MCP via Docker (Claude Desktop / OpenCode)
+
+Add to your MCP config:
+
+```json
+{
+  "mcpServers": {
+    "th0th": {
+      "type": "local",
+      "command": ["docker", "compose", "run", "--rm", "-i", "mcp"],
+      "enabled": true
+    }
+  }
+}
+```
+
+Or build and run directly:
+
+```bash
+# Build MCP image
+docker build --target mcp -t th0th-mcp .
+
+# Use in MCP config
+{
+  "mcpServers": {
+    "th0th": {
+      "type": "local",
+      "command": [
+        "docker", "run", "--rm", "-i",
+        "--network", "host",
+        "-e", "TH0TH_API_URL=http://localhost:3333",
+        "th0th-mcp"
+      ],
+      "enabled": true
+    }
+  }
+}
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TH0TH_API_PORT` | `3333` | API port |
+| `OLLAMA_BASE_URL` | `http://host.docker.internal:11434` | Ollama endpoint |
+| `OLLAMA_EMBEDDING_MODEL` | `nomic-embed-text:latest` | Embedding model |
+| `OLLAMA_EMBEDDING_DIMENSIONS` | `768` | Embedding dimensions |
+| `RLM_LLM_ENABLED` | `false` | Enable LLM compression |
+| `MISTRAL_API_KEY` | - | Mistral API key |
+
+### Data Persistence
+
+The API container uses a named volume `th0th-data` at `/data` for SQLite databases. Data persists across container restarts.
+
+```bash
+# View volume
+docker volume inspect th0th_th0th-data
+
+# Backup
+docker cp th0th-api:/data ./backup
+
+# Clean everything
+docker compose down -v
+```
+
+---
+
 ## Local-First Mode (100% Offline)
 
-The script `./scripts/setup-local-first.sh` configures:
+### Quick Setup
 
+```bash
+./scripts/setup-local-first.sh
+```
+
+This script:
 1. **Ollama** - Installs and starts if needed
-2. **Embedding models** - Downloads `nomic-embed-text` or configured model
-3. **Data directories** - Creates `~/.rlm/`
-4. **Environment variables** - Copies `.env.local-first` to `.env`
+2. **Embedding models** - Downloads `nomic-embed-text`
+3. **Config** - Creates `~/.config/th0th/config.json`
+4. **Data directories** - Creates `~/.rlm/`
 
-**Local mode features:**
+### Manual Setup
+
+```bash
+# Install Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Pull embedding model
+ollama pull nomic-embed-text
+
+# Initialize config
+npx th0th-config init
+```
+
+### Features
+
 - Embeddings: Ollama (nomic-embed-text, bge-m3, etc.)
 - Compression: Rule-based (no LLM)
 - Cache: Local SQLite

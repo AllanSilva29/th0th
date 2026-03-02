@@ -15,7 +15,7 @@ export interface ToolDefinition {
 
 export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
-    name: "index_project",
+    name: "th0th:index",
     description:
       "Index a project directory for contextual code search with semantic embeddings",
     apiEndpoint: "/api/v1/project/index",
@@ -54,9 +54,9 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "get_index_status",
+    name: "th0th:index_status",
     description:
-      "Get the status of a background indexing job by its jobId. Use this after calling index_project to check progress.",
+      "Get the status of a background indexing job by its jobId. Use this after calling th0th:index to check progress.",
     apiEndpoint: "/api/v1/project/index/status/:jobId",
     apiMethod: "GET",
     inputSchema: {
@@ -64,14 +64,14 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       properties: {
         jobId: {
           type: "string",
-          description: "Job ID returned from index_project",
+          description: "Job ID returned from th0th:index",
         },
       },
       required: ["jobId"],
     },
   },
   {
-    name: "search_project",
+    name: "th0th:search",
     description:
       "Search for code in an indexed project using semantic and keyword search",
     apiEndpoint: "/api/v1/search/project",
@@ -134,30 +134,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "search_code",
-    description:
-      "Search for code using semantic and keyword search (alias for search_project)",
-    apiEndpoint: "/api/v1/search/code",
-    apiMethod: "POST",
-    inputSchema: {
-      type: "object",
-      properties: {
-        query: {
-          type: "string",
-          description: "Code search query (natural language or keywords)",
-        },
-        projectId: { type: "string", description: "Project ID to search in" },
-        limit: {
-          type: "number",
-          description: "Maximum number of results",
-          default: 10,
-        },
-      },
-      required: ["query", "projectId"],
-    },
-  },
-  {
-    name: "store_memory",
+    name: "th0th:remember",
     description:
       "Store memory in the hierarchical memory system (local SQLite)",
     apiEndpoint: "/api/v1/memory/store",
@@ -200,7 +177,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "search_memories",
+    name: "th0th:recall",
     description:
       "Search stored memories across sessions using semantic search (recovers context from previous conversations)",
     apiEndpoint: "/api/v1/memory/search",
@@ -254,7 +231,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "compress_context",
+    name: "th0th:compress",
     description:
       "Compress context using semantic compression (keeps structure, removes details)",
     apiEndpoint: "/api/v1/context/compress",
@@ -289,7 +266,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "get_optimized_context",
+    name: "th0th:optimized_context",
     description:
       "Retrieve and compress context with maximum token efficiency (search + compress)",
     apiEndpoint: "/api/v1/context/optimized",
@@ -324,7 +301,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "get_analytics",
+    name: "th0th:analytics",
     description:
       "Get search analytics and performance metrics (usage patterns, cache performance, etc)",
     apiEndpoint: "/api/v1/analytics",

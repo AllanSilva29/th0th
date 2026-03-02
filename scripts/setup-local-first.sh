@@ -14,16 +14,17 @@ BOLD='\033[1m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 RED='\033[0;31m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo ""
-echo -e "${BOLD}========================================${NC}"
-echo -e "${BOLD}  th0th - Local-First Setup${NC}"
-echo -e "${BOLD}========================================${NC}"
+echo -e "${BOLD}╔═══════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}║             th0th - Local-First Setup                         ║${NC}"
+echo -e "${BOLD}╚═══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
 # ---- Step 1: Check Ollama ----
-echo -e "${BOLD}[1/5] Checking Ollama...${NC}"
+echo -e "${BOLD}[1/4] Checking Ollama...${NC}"
 
 OLLAMA_URL="${OLLAMA_HOST:-http://localhost:11434}"
 OLLAMA_HAS_CLI=false
@@ -44,7 +45,7 @@ fi
 
 if [ "$OLLAMA_HAS_CLI" = false ] && [ "$OLLAMA_API_REACHABLE" = false ]; then
     # Neither CLI nor API available - try to install
-    echo -e "  ${YELLOW}⚠${NC} Ollama not found (no CLI, no API at ${OLLAMA_URL}). Installing..."
+    echo -e "  ${YELLOW}⚠${NC} Ollama not found. Installing..."
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         curl -fsSL https://ollama.com/install.sh | sh
         OLLAMA_HAS_CLI=true
@@ -84,7 +85,7 @@ fi
 
 # ---- Step 2: Pull embedding models ----
 echo ""
-echo -e "${BOLD}[2/5] Pulling embedding models...${NC}"
+echo -e "${BOLD}[2/4] Pulling embedding models...${NC}"
 
 EMBEDDING_MODEL="${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text:latest}"
 
@@ -116,78 +117,114 @@ else
     echo -e "  ${GREEN}✓${NC} Model ${EMBEDDING_MODEL} pulled"
 fi
 
-# ---- Step 3: Create data directories ----
+# ---- Step 3: Create directories and config ----
 echo ""
-echo -e "${BOLD}[3/5] Creating data directories...${NC}"
+echo -e "${BOLD}[3/4] Creating directories and config...${NC}"
 
+# Data directory
 DATA_DIR="${HOME}/.rlm"
 mkdir -p "$DATA_DIR"
 echo -e "  ${GREEN}✓${NC} Data directory: ${DATA_DIR}"
 
-# ---- Step 4: Configure environment ----
-echo ""
-echo -e "${BOLD}[4/5] Configuring environment...${NC}"
+# Config directory
+CONFIG_DIR="${HOME}/.config/th0th"
+mkdir -p "$CONFIG_DIR"
+CONFIG_FILE="${CONFIG_DIR}/config.json"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-
-if [ ! -f "${PROJECT_DIR}/.env" ]; then
-    cp "${PROJECT_DIR}/.env.local-first" "${PROJECT_DIR}/.env"
-    echo -e "  ${GREEN}✓${NC} Created .env from .env.local-first"
+# Create config file if not exists
+if [ ! -f "$CONFIG_FILE" ]; then
+    cat > "$CONFIG_FILE" << EOF
+{
+  "embedding": {
+    "provider": "ollama",
+    "model": "${EMBEDDING_MODEL}",
+    "baseURL": "${OLLAMA_URL}",
+    "dimensions": 768
+  },
+  "compression": {
+    "enabled": true,
+    "strategy": "code_structure",
+    "targetRatio": 0.7
+  },
+  "cache": {
+    "enabled": true,
+    "l1MaxSizeMB": 100,
+    "l2MaxSizeMB": 500,
+    "defaultTTLSeconds": 3600
+  },
+  "dataDir": "${DATA_DIR}",
+  "logging": {
+    "level": "info",
+    "enableMetrics": false
+  }
+}
+EOF
+    echo -e "  ${GREEN}✓${NC} Created config: ${CONFIG_FILE}"
 else
-    echo -e "  ${YELLOW}⚠${NC} .env already exists. To use local-first config:"
-    echo -e "      cp .env.local-first .env"
+    echo -e "  ${YELLOW}⚠${NC} Config already exists: ${CONFIG_FILE}"
 fi
 
-# ---- Step 5: Verify setup ----
+# ---- Step 4: Verify setup ----
 echo ""
-echo -e "${BOLD}[5/5] Verifying setup...${NC}"
+echo -e "${BOLD}[4/4] Verifying setup...${NC}"
 
 # Check Ollama health
 if curl -s "${OLLAMA_URL}/api/tags" > /dev/null 2>&1; then
     MODELS=$(curl -s "${OLLAMA_URL}/api/tags" | python3 -c "import sys,json; data=json.load(sys.stdin); print(len(data.get('models',[])))" 2>/dev/null || echo "?")
-    echo -e "  ${GREEN}✓${NC} Ollama: healthy at ${OLLAMA_URL} (${MODELS} models available)"
+    echo -e "  ${GREEN}✓${NC} Ollama: healthy at ${OLLAMA_URL} (${MODELS} models)"
 else
-    echo -e "  ${RED}✗${NC} Ollama: not responding at ${OLLAMA_URL}"
+    echo -e "  ${RED}✗${NC} Ollama: not responding"
 fi
 
 # Check data directory
 if [ -d "$DATA_DIR" ] && [ -w "$DATA_DIR" ]; then
-    DB_COUNT=$(find "$DATA_DIR" -name "*.db" 2>/dev/null | wc -l)
-    echo -e "  ${GREEN}✓${NC} Data directory: writable (${DB_COUNT} databases)"
+    echo -e "  ${GREEN}✓${NC} Data directory: ${DATA_DIR}"
 else
     echo -e "  ${RED}✗${NC} Data directory: not writable"
 fi
 
-# Check .env
-if [ -f "${PROJECT_DIR}/.env" ]; then
-    if grep -q "RLM_LLM_ENABLED=false" "${PROJECT_DIR}/.env" 2>/dev/null; then
-        echo -e "  ${GREEN}✓${NC} Config: local-first mode"
-    else
-        echo -e "  ${YELLOW}⚠${NC} Config: may have external dependencies"
-    fi
+# Check config
+if [ -f "$CONFIG_FILE" ]; then
+    echo -e "  ${GREEN}✓${NC} Config: ${CONFIG_FILE}"
 else
-    echo -e "  ${RED}✗${NC} Config: .env not found"
+    echo -e "  ${RED}✗${NC} Config: not found"
 fi
 
 # ---- Summary ----
 echo ""
-echo -e "${BOLD}========================================${NC}"
-echo -e "${BOLD}  Setup Complete${NC}"
-echo -e "${BOLD}========================================${NC}"
+echo -e "${BOLD}╔═══════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}║                    Setup Complete                             ║${NC}"
+echo -e "${BOLD}╚═══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "  ${GREEN}Local-First Configuration:${NC}"
-echo -e "    Embeddings: Ollama (${EMBEDDING_MODEL})"
-echo -e "    Compression: Rule-based (no LLM)"
-echo -e "    Cache: SQLite (local)"
-echo -e "    Vector DB: SQLite (local)"
-echo -e "    External APIs: None"
-echo -e "    Cost: \$0"
+echo -e "    ${BLUE}•${NC} Embeddings: Ollama (${EMBEDDING_MODEL})"
+echo -e "    ${BLUE}•${NC} Compression: Rule-based (no LLM)"
+echo -e "    ${BLUE}•${NC} Cache: SQLite (local)"
+echo -e "    ${BLUE}•${NC} Vector DB: SQLite (local)"
+echo -e "    ${BLUE}•${NC} Cost: ${GREEN}\$0${NC}"
 echo ""
-echo -e "  ${BOLD}Next steps:${NC}"
-echo -e "    1. bun install"
-echo -e "    2. bun run build"
-echo -e "    3. bun run start:api"
-echo -e "    4. curl http://localhost:3333/health"
-echo -e "    5. curl http://localhost:3333/api/v1/system/health/local"
+echo -e "  ${BOLD}Config file:${NC}     ${CONFIG_FILE}"
+echo -e "  ${BOLD}Data directory:${NC}  ${DATA_DIR}"
+echo ""
+echo -e "  ${BOLD}To change provider:${NC}"
+echo -e "    npx th0th-config use mistral --api-key YOUR_KEY"
+echo -e "    npx th0th-config use openai --api-key YOUR_KEY"
+echo ""
+echo -e "  ${BOLD}Next steps (from source):${NC}"
+echo -e "    1. ${BLUE}bun install${NC}"
+echo -e "    2. ${BLUE}bun run build${NC}"
+echo -e "    3. ${BLUE}bun run start:api${NC}"
+echo ""
+echo -e "  ${BOLD}Or use with OpenCode:${NC}"
+echo -e '    Add to ~/.config/opencode/opencode.json:'
+echo ""
+echo -e '    {'
+echo -e '      "mcpServers": {'
+echo -e '        "th0th": {'
+echo -e '          "type": "local",'
+echo -e '          "command": ["npx", "@th0th/mcp-client"],'
+echo -e '          "enabled": true'
+echo -e '        }'
+echo -e '      }'
+echo -e '    }'
 echo ""

@@ -284,3 +284,19 @@ export class Config {
  * Global config instance
  */
 export const config = new Config();
+
+export {
+  Th0thConfig,
+  defaultTh0thConfig,
+  configExamples,
+} from "./th0th-config";
+
+export {
+  getConfigDir,
+  getConfigPath,
+  configExists,
+  loadConfig,
+  saveConfig,
+  initConfig,
+  getConfigForEnv,
+} from "./config-loader";

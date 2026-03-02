@@ -14,6 +14,18 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { ApiClient } from "./api-client.js";
 import { TOOL_DEFINITIONS, getToolDefinition } from "./tool-definitions.js";
+import { configExists, initConfig } from "@th0th/shared/config";
+
+// Auto-configure on first run
+if (!configExists()) {
+  initConfig();
+  console.error(`
+[th0th] Initialized with default configuration
+[th0th] Config: ~/.config/th0th/config.json
+[th0th] Provider: Ollama (local, free)
+[th0th] To change: npx th0th-config use mistral --api-key YOUR_KEY
+`);
+}
 
 class McpProxyServer {
   private server: Server;

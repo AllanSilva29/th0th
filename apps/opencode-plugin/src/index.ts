@@ -1,5 +1,6 @@
 import type { Plugin, PluginInput } from "@opencode-ai/plugin"
 import { tool, type ToolContext } from "@opencode-ai/plugin"
+import { configExists, initConfig, loadConfig } from "@th0th/shared/config"
 
 // ---------------------------------------------------------------------------
 // Config
@@ -10,6 +11,28 @@ const FETCH_TIMEOUT_MS = 5_000
 const REINDEX_DEBOUNCE_MS = 60_000
 const REINDEX_FILE_THRESHOLD = 15
 const MAX_EDITED_FILES_TRACKED = 200
+
+// ---------------------------------------------------------------------------
+// Auto-configuration
+// ---------------------------------------------------------------------------
+
+function ensureConfig(): void {
+  if (!configExists()) {
+    initConfig()
+    console.log(`
+╔═══════════════════════════════════════════════════════════════╗
+║  th0th initialized with default configuration                  ║
+║                                                                ║
+║  Config: ~/.config/th0th/config.json                           ║
+║  Provider: Ollama (local, free)                                ║
+║                                                                ║
+║  To change provider:                                           ║
+║    npx th0th-config use mistral --api-key YOUR_KEY             ║
+║    npx th0th-config use openai --api-key YOUR_KEY              ║
+╚═══════════════════════════════════════════════════════════════╝
+`)
+  }
+}
 
 // ---------------------------------------------------------------------------
 // HTTP client with timeout + abort
@@ -67,6 +90,11 @@ async function th0thGet<T = unknown>(
 // ---------------------------------------------------------------------------
 
 export const Th0thPlugin: Plugin = async ({ project, directory, worktree, client }: PluginInput) => {
+  // Auto-configure on first run
+  ensureConfig()
+  
+  const config = loadConfig()
+  
   const projectId = project?.id || directory?.split("/").pop() || "default"
   const projectPath = worktree || directory
 
@@ -139,7 +167,7 @@ export const Th0thPlugin: Plugin = async ({ project, directory, worktree, client
 
   return {
     tool: {
-      th0th_search: tool({
+      "th0th:search": tool({
         description:
           "Semantic code search in indexed project. Uses hybrid vector + keyword search with RRF ranking. Returns relevant code snippets with file paths and line numbers.",
         args: {
@@ -165,7 +193,7 @@ export const Th0thPlugin: Plugin = async ({ project, directory, worktree, client
         },
       }),
 
-      th0th_remember: tool({
+      "th0th:remember": tool({
         description:
           "Store important information in th0th memory. Persists across sessions. Use for: user preferences, architectural decisions, discovered patterns.",
         args: {
@@ -189,7 +217,7 @@ export const Th0thPlugin: Plugin = async ({ project, directory, worktree, client
         },
       }),
 
-      th0th_recall: tool({
+      "th0th:recall": tool({
         description:
           "Search stored memories from previous sessions. Recovers decisions, patterns, and context.",
         args: {
@@ -213,7 +241,7 @@ export const Th0thPlugin: Plugin = async ({ project, directory, worktree, client
         },
       }),
 
-      th0th_index: tool({
+      "th0th:index": tool({
         description:
           "Index the current project for semantic search. Async - returns jobId.",
         args: {
@@ -233,7 +261,7 @@ export const Th0thPlugin: Plugin = async ({ project, directory, worktree, client
         },
       }),
 
-      th0th_compress: tool({
+      "th0th:compress": tool({
         description:
           "Compress context using semantic compression. Keeps structure, removes details. 70-98% token reduction.",
         args: {
@@ -253,7 +281,7 @@ export const Th0thPlugin: Plugin = async ({ project, directory, worktree, client
         },
       }),
 
-      th0th_optimized_context: tool({
+      "th0th:optimized_context": tool({
         description:
           "Search + compress in one call. Maximum token efficiency for limited context budgets.",
         args: {
@@ -273,11 +301,11 @@ export const Th0thPlugin: Plugin = async ({ project, directory, worktree, client
         },
       }),
 
-      th0th_get_index_status: tool({
+      "th0th:index_status": tool({
         description:
-          "Check the status and progress of an async indexing job. Use the jobId returned by th0th_index.",
+          "Check the status and progress of an async indexing job. Use the jobId returned by th0th:index.",
         args: {
-          jobId: tool.schema.string().describe("Job ID returned by th0th_index"),
+          jobId: tool.schema.string().describe("Job ID returned by th0th:index"),
         },
         async execute(args) {
           const result = await th0thGet(`/api/v1/project/index/status/${encodeURIComponent(args.jobId)}`)
@@ -285,7 +313,7 @@ export const Th0thPlugin: Plugin = async ({ project, directory, worktree, client
         },
       }),
 
-      th0th_analytics: tool({
+      "th0th:analytics": tool({
         description: "Get th0th usage analytics and performance metrics.",
         args: {
           type: tool.schema.enum(["summary", "project", "cache", "recent"]).optional().default("summary"),

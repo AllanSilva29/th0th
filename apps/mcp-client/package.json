@@ -5,7 +5,8 @@
   "type": "module",
   "main": "src/index.ts",
   "bin": {
-    "th0th": "src/index.ts"
+    "th0th": "src/index.ts",
+    "th0th-config": "src/config-cli.ts"
   },
   "scripts": {
     "dev": "bun run --watch src/index.ts",
