@@ -66,6 +66,6 @@ jobs:
 
       - name: Test skill installation
         run: |
-          npx skills add ${{ github.repository }}/th0th-tools --dry-run || true
+          npx skills add ${{ github.repository }} --list
         env:
           DISABLE_TELEMETRY: 1

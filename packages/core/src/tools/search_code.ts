@@ -1,8 +1,8 @@
 /**
  * Search Code Tool
  *
- * Alias para search_project com foco em busca semântica de código.
- * Usa os mesmos recursos de cache, auto-reindex e filtros.
+ * Alias for search_project focused on semantic code search.
+ * Uses the same caching, auto-reindex, and filter capabilities.
  */
 
 import { IToolHandler } from "@th0th/shared";

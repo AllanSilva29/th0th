@@ -1,9 +1,9 @@
 /**
  * Get Optimized Context Tool
  *
- * Busca código relevante + memórias persistentes + comprime semanticamente
- * para economizar tokens.
- * Combina search_project + search_memories + compress_context automaticamente.
+ * Searches relevant code + persistent memories + compresses semantically
+ * to save tokens.
+ * Combines search_project + search_memories + compress_context automatically.
  */
 
 import { IToolHandler } from "@th0th/shared";

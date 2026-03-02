@@ -1,8 +1,8 @@
 /**
  * Search Memories Tool
  *
- * Busca memórias armazenadas no sistema hierárquico local (SQLite)
- * para recuperar contexto persistente entre sessões
+ * Searches memories stored in the local hierarchical system (SQLite)
+ * to recover persistent context across sessions.
  */
 
 import { IToolHandler } from "@th0th/shared";

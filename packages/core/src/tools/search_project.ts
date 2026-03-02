@@ -1,8 +1,8 @@
 /**
  * Search Project Tool
  *
- * Busca contextual em um projeto indexado usando
- * busca híbrida (vector + keyword) com RRF.
+ * Contextual search on an indexed project using
+ * hybrid search (vector + keyword) with RRF.
  */
 
 import { IToolHandler } from "@th0th/shared";
@@ -212,7 +212,7 @@ export class SearchProjectTool implements IToolHandler {
             projectId,
             reason: reindexInfo.reason,
             filesPending: (reindexInfo as any).filesPending || 0,
-            hint: "Use th0th_index_project + th0th_get_index_status for full indexing",
+            hint: "Use th0th:index + th0th:get_index_status for full indexing",
           });
         }
       }
@@ -277,7 +277,7 @@ export class SearchProjectTool implements IToolHandler {
             (reindexInfo as any)?.deferred
               ? [
                   "Indexing deferred to keep this search responsive",
-                  "Run th0th_index_project(projectPath, projectId) and poll th0th_get_index_status(jobId)",
+                  "Run th0th:index(projectPath, projectId) and poll th0th:get_index_status(jobId)",
                 ]
               : [],
           filters: {

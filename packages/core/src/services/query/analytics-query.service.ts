@@ -52,7 +52,7 @@ export class AnalyticsQueryService {
       take: limit,
     });
 
-    return searches.map((s) => ({
+    return searches.map((s: any) => ({
       ...s,
       timestamp: s.timestamp.toISOString(),
     }));
@@ -70,10 +70,10 @@ export class AnalyticsQueryService {
       take: 20,
     });
 
-    const totalHits = cacheStats.reduce((sum, stat) => sum + stat.hitCount, 0);
+    const totalHits = cacheStats.reduce((sum: number, stat: any) => sum + stat.hitCount, 0);
 
     return {
-      entries: cacheStats.map((stat) => ({
+      entries: cacheStats.map((stat: any) => ({
         projectId: stat.projectId,
         queryHash: stat.queryHash,
         hitCount: stat.hitCount,
@@ -113,14 +113,14 @@ export class AnalyticsQueryService {
       cacheHitRate: totalQueries > 0 
         ? Math.round((cacheHits / totalQueries) * 10000) / 100
         : 0,
-      recentQueries: queries.map((q) => ({
+      recentQueries: queries.map((q: any) => ({
         query: q.query,
         resultsCount: q.resultsCount,
         duration: q.duration,
         cacheHit: q.cacheHit,
         timestamp: q.timestamp.toISOString(),
       })),
-      topCachedQueries: cacheStats.map((s) => ({
+      topCachedQueries: cacheStats.map((s: any) => ({
         queryHash: s.queryHash,
         hitCount: s.hitCount,
       })),

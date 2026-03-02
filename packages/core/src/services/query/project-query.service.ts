@@ -29,7 +29,7 @@ export class ProjectQueryService {
     });
 
     return {
-      projects: projects.map((p) => ({
+      projects: projects.map((p: any) => ({
         id: p.projectId,
         path: p.path,
         documentCount: p._count.documents,
@@ -70,11 +70,11 @@ export class ProjectQueryService {
       documentCount: project._count.documents,
       totalSize: project.totalSize,
       lastIndexed: project.lastIndexed?.toISOString() || null,
-      fileTypes: fileTypes.map((ft) => ({
+      fileTypes: fileTypes.map((ft: any) => ({
         type: ft.fileType || "unknown",
         count: ft._count,
       })),
-      recentDocuments: project.documents.map((doc) => ({
+      recentDocuments: project.documents.map((doc: any) => ({
         path: doc.filePath,
         type: doc.fileType,
         size: doc.size,
@@ -105,7 +105,7 @@ export class ProjectQueryService {
     ]);
 
     return {
-      documents: documents.map((doc) => ({
+      documents: documents.map((doc: any) => ({
         path: doc.filePath,
         type: doc.fileType,
         size: doc.size,

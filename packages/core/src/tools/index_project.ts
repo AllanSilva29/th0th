@@ -1,11 +1,11 @@
 /**
  * Index Project Tool
  *
- * Indexa um projeto inteiro para busca contextual otimizada (ASSÍNCRONO).
- * Cria embeddings e índices FTS5 para todos os arquivos relevantes.
+ * Indexes an entire project for optimized contextual search (ASYNC).
+ * Creates embeddings and FTS5 indexes for all relevant files.
  * 
- * Retorna um jobId imediatamente e processa a indexação em background.
- * Use th0th_get_index_status(jobId) para acompanhar o progresso.
+ * Returns a jobId immediately and processes indexing in background.
+ * Use th0th:get_index_status(jobId) to check progress.
  */
 
 import { IToolHandler } from "@th0th/shared";
@@ -101,7 +101,7 @@ export class IndexProjectTool implements IToolHandler {
         });
       });
 
-      // Retorna imediatamente com jobId
+      // Return immediately with jobId
       return {
         success: true,
         data: {
@@ -110,7 +110,7 @@ export class IndexProjectTool implements IToolHandler {
           projectPath,
           status: "started",
           message:
-            "Indexing started in background. Use th0th_get_index_status(jobId) to check progress.",
+            "Indexing started in background. Use th0th:get_index_status(jobId) to check progress.",
         },
       };
     } catch (error) {
@@ -159,7 +159,7 @@ export class IndexProjectTool implements IToolHandler {
         });
       }
 
-      // Indexa o projeto (contextualSearch já faz progress logging interno)
+      // Index the project (contextualSearch already does internal progress logging)
       const stats = await this.contextualSearch.indexProject(
         projectPath,
         projectId,
