@@ -228,7 +228,8 @@ export class CodeCompressor implements ICompressor {
     return (
       line.includes('function ') ||
       line.includes('=>') ||
-      /^(public|private|protected|async)?\s*\w+\s*\(/.test(line)
+      /^(public|private|protected|async)?\s*\w+\s*\(/.test(line) ||
+      /^(static\s+)?(?:Future(?:<[^>]+>)?|void|int|double|String|bool|dynamic|num|[A-Z]\w*(?:<[^>]+>)?)\s+\w+\s*\(/.test(line)
     );
   }
 
@@ -315,6 +316,23 @@ export class CodeCompressor implements ICompressor {
    * Detect programming language from content
    */
   private detectLanguage(content: string): string {
+    const hasDartDirective = /(\bimport\s+['"][^'"]+['"]\s*;|\blibrary\s+\w+[\w.]*\s*;|\bpart\s+of\s+\w+[\w.]*\s*;)/.test(
+      content
+    );
+    const hasDartType = /\b(class|enum|mixin|extension)\s+\w+/.test(content);
+    const hasDartMain = /\bvoid\s+main\s*\(/.test(content);
+    const hasPartOfQuoted = /\bpart\s+of\s+['"][^'"]+['"]\s*;/.test(content);
+    const hasDartImport = /\bimport\s+['"](dart:|package:)[^'"]+['"]\s*;/.test(content);
+
+    if (
+      (hasDartDirective && hasDartType) ||
+      hasDartMain ||
+      hasPartOfQuoted ||
+      hasDartImport
+    ) {
+      return 'dart';
+    }
+
     if (content.includes('import ') && content.includes('from ')) {
       if (content.includes(': ') || content.includes('interface ')) {
         return 'typescript';
