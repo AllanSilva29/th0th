@@ -24,10 +24,16 @@ on:
         required: false
         default: false
         type: boolean
+      force-publish:
+        description: 'Force publish even if version already exists (uses --tolerate-republish)'
+        required: false
+        default: true
+        type: boolean
 
 env:
   NPM_TAG: ${{ inputs.tag || 'latest' }}
   DRY_RUN: ${{ inputs.dry-run == true && '--dry-run' || '' }}
+  FORCE_PUBLISH: ${{ (inputs.force-publish == true || github.event_name == 'release') && '--tolerate-republish' || '' }}
 
 jobs:
   build:
@@ -113,13 +119,13 @@ jobs:
 
       - name: Publish @th0th-ai/shared
         working-directory: packages/shared
-        run: bun publish --access public --tag ${{ env.NPM_TAG }} --tolerate-republish ${{ env.DRY_RUN }}
+        run: bun publish --access public --tag ${{ env.NPM_TAG }} ${{ env.FORCE_PUBLISH }} ${{ env.DRY_RUN }}
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @th0th-ai/core
         working-directory: packages/core
-        run: bun publish --access public --tag ${{ env.NPM_TAG }} --tolerate-republish ${{ env.DRY_RUN }}
+        run: bun publish --access public --tag ${{ env.NPM_TAG }} ${{ env.FORCE_PUBLISH }} ${{ env.DRY_RUN }}
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -148,18 +154,18 @@ jobs:
 
       - name: Publish @th0th-ai/tools-api
         working-directory: apps/tools-api
-        run: bun publish --access public --tag ${{ env.NPM_TAG }} --tolerate-republish ${{ env.DRY_RUN }}
+        run: bun publish --access public --tag ${{ env.NPM_TAG }} ${{ env.FORCE_PUBLISH }} ${{ env.DRY_RUN }}
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @th0th-ai/mcp-client
         working-directory: apps/mcp-client
-        run: bun publish --access public --tag ${{ env.NPM_TAG }} --tolerate-republish ${{ env.DRY_RUN }}
+        run: bun publish --access public --tag ${{ env.NPM_TAG }} ${{ env.FORCE_PUBLISH }} ${{ env.DRY_RUN }}
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @th0th-ai/opencode-plugin
         working-directory: apps/opencode-plugin
-        run: bun publish --access public --tag ${{ env.NPM_TAG }} --tolerate-republish ${{ env.DRY_RUN }}
+        run: bun publish --access public --tag ${{ env.NPM_TAG }} ${{ env.FORCE_PUBLISH }} ${{ env.DRY_RUN }}
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
