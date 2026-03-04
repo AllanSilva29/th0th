@@ -18,6 +18,11 @@ bun install
 
 # 2. Setup (100% offline with Ollama)
 ./scripts/setup-local-first.sh
+# This will:
+# - Install/start Ollama
+# - Pull nomic-embed-text:latest model
+# - Create ~/.config/th0th/config.json
+# - Create .env file with defaults
 
 # 3. Build and start
 bun run build
@@ -25,6 +30,9 @@ bun run start:api
 ```
 
 Verify: `curl http://localhost:3333/health`
+
+**Note**: The setup script creates a `.env` file at the project root with default values. 
+The API runs in `apps/tools-api/` directory and will load environment variables from the root `.env` automatically.
 
 ---
 
@@ -204,7 +212,7 @@ npx @th0th/mcp-client th0th-config init --openai your-api-key    # OpenAI
 
 # Switch provider
 npx @th0th/mcp-client th0th-config use mistral --api-key your-key
-npx @th0th/mcp-client th0th-config use ollama --model bge-m3:latest
+npx @th0th/mcp-client th0th-config use ollama --model nomic-embed-text:latest
 
 # Set specific configuration values
 npx @th0th/mcp-client th0th-config set embedding.dimensions 1024
