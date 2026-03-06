@@ -8,6 +8,7 @@
  * Local-First: Funciona 100% offline com Ollama + SQLite.
  */
 
+import "@th0th-ai/shared/env";
 import "@th0th-ai/shared/config";
 
 import { Elysia } from "elysia";

@@ -79,7 +79,7 @@ echo ""
 
 # Test embedding
 echo "🧪 Testando embedding..."
-if curl -s "$OLLAMA_URL/api/embeddings" \
+if curl -s "$OLLAMA_URL/api/embed" \
     -d '{
         "model": "bge-m3",
         "prompt": "test"

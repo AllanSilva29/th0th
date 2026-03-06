@@ -14,15 +14,20 @@ import { resolve, dirname } from "path";
 
 function findEnvFile(): string | undefined {
   let dir = process.cwd();
-  const root = dirname(dir); // stop condition (e.g. "/" on unix)
-
-  while (dir !== root) {
+  
+  // Walk up to filesystem root
+  for (let i = 0; i < 10; i++) { // max 10 levels up
     const envPath = resolve(dir, ".env");
+    
     if (existsSync(envPath)) {
       return envPath;
     }
+    
     const parent = dirname(dir);
-    if (parent === dir) break; // reached filesystem root
+    if (parent === dir) {
+      // reached filesystem root
+      break;
+    }
     dir = parent;
   }
 

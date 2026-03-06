@@ -5,6 +5,9 @@
  * Supports: OpenAI, Google, Cohere, Ollama (local), Mistral
  */
 
+// Load environment variables first
+import "@th0th-ai/shared/env";
+
 export interface EmbeddingProviderConfig {
   provider: "openai" | "google" | "cohere" | "ollama" | "mistral";
   model: string;
@@ -29,74 +32,99 @@ export interface EmbeddingProviderConfig {
  * - Google (no API key)
  * - Cohere (no API key)
  */
-export const embeddingProviders: Record<string, EmbeddingProviderConfig> = {
-  // === ENABLED PROVIDERS ===
+let _embeddingProvidersCache: Record<string, EmbeddingProviderConfig> | null = null;
+
+export function getEmbeddingProviders(): Record<string, EmbeddingProviderConfig> {
+  if (_embeddingProvidersCache) {
+    return _embeddingProvidersCache;
+  }
   
-  ollama: {
-    provider: "ollama",
-    model: process.env.OLLAMA_EMBEDDING_MODEL || "bge-m3",
-    baseURL: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
-    dimensions: Number(process.env.OLLAMA_EMBEDDING_DIMENSIONS || "1024"),
-    priority: 1, // Highest priority (local, fast, free)
-    timeout: 300000, // 5 minutes (local can be slow on first run)
-    maxRetries: 2,
-  },
+  const model = process.env.OLLAMA_EMBEDDING_MODEL || "bge-m3";
   
-  mistralText: {
-    provider: "mistral",
-    model: process.env.MISTRAL_TEXT_EMBEDDING_MODEL || "mistral-embed",
-    apiKey: process.env.MISTRAL_API_KEY,
-    dimensions: 1024,
-    priority: 2, // Fallback to Mistral if Ollama is unavailable
-    timeout: 60000,
-    maxRetries: 3,
-  },
+  _embeddingProvidersCache = {
+    // === ENABLED PROVIDERS ===
+    
+    ollama: {
+      provider: "ollama",
+      model,
+      baseURL: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+      dimensions: Number(process.env.OLLAMA_EMBEDDING_DIMENSIONS || "1024"),
+      priority: 1, // Highest priority (local, fast, free)
+      timeout: 300000, // 5 minutes (local can be slow on first run)
+      maxRetries: 2,
+    },
+    
+    mistralText: {
+      provider: "mistral",
+      model: process.env.MISTRAL_TEXT_EMBEDDING_MODEL || "mistral-embed",
+      apiKey: process.env.MISTRAL_API_KEY,
+      dimensions: 1024,
+      priority: 2, // Fallback to Mistral if Ollama is unavailable
+      timeout: 60000,
+      maxRetries: 3,
+    },
 
-  mistralCode: {
-    provider: "mistral",
-    model: process.env.MISTRAL_CODE_EMBEDDING_MODEL || "codestral-embed",
-    apiKey: process.env.MISTRAL_API_KEY,
-    dimensions: 1536, // Default, can go up to 3072
-    priority: 3,
-    timeout: 60000,
-    maxRetries: 3,
-  },
+    mistralCode: {
+      provider: "mistral",
+      model: process.env.MISTRAL_CODE_EMBEDDING_MODEL || "codestral-embed",
+      apiKey: process.env.MISTRAL_API_KEY,
+      dimensions: 1536, // Default, can go up to 3072
+      priority: 3,
+      timeout: 60000,
+      maxRetries: 3,
+    },
 
-  // === DISABLED PROVIDERS (uncomment and configure to enable) ===
+    // === DISABLED PROVIDERS (uncomment and configure to enable) ===
+    
+    /*
+
+    openai: {
+      provider: "openai",
+      model: process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small",
+      apiKey: process.env.OPENAI_API_KEY,
+      dimensions: 1536,
+      priority: 10,
+      timeout: 60000, // 60 seconds
+      maxRetries: 3,
+    },
+
+    google: {
+      provider: "google",
+      model: process.env.GOOGLE_EMBEDDING_MODEL || "text-embedding-004",
+      apiKey: process.env.GOOGLE_API_KEY,
+      dimensions: 768,
+      priority: 10,
+      timeout: 60000,
+      maxRetries: 3,
+    },
+
+    cohere: {
+      provider: "cohere",
+      model: process.env.COHERE_EMBEDDING_MODEL || "embed-english-v3.0",
+      apiKey: process.env.COHERE_API_KEY,
+      dimensions: 1024,
+      priority: 10,
+      timeout: 60000,
+      maxRetries: 3,
+    },
+    */
+  };
   
-  /*
+  return _embeddingProvidersCache;
+}
 
-  openai: {
-    provider: "openai",
-    model: process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small",
-    apiKey: process.env.OPENAI_API_KEY,
-    dimensions: 1536,
-    priority: 10,
-    timeout: 60000, // 60 seconds
-    maxRetries: 3,
+// Backward compatibility
+export const embeddingProviders = new Proxy({} as Record<string, EmbeddingProviderConfig>, {
+  get(target, prop) {
+    return getEmbeddingProviders()[prop as string];
   },
-
-  google: {
-    provider: "google",
-    model: process.env.GOOGLE_EMBEDDING_MODEL || "text-embedding-004",
-    apiKey: process.env.GOOGLE_API_KEY,
-    dimensions: 768,
-    priority: 10,
-    timeout: 60000,
-    maxRetries: 3,
+  ownKeys() {
+    return Reflect.ownKeys(getEmbeddingProviders());
   },
-
-  cohere: {
-    provider: "cohere",
-    model: process.env.COHERE_EMBEDDING_MODEL || "embed-english-v3.0",
-    apiKey: process.env.COHERE_API_KEY,
-    dimensions: 1024,
-    priority: 10,
-    timeout: 60000,
-    maxRetries: 3,
-  },
-  */
-};
+  getOwnPropertyDescriptor(target, prop) {
+    return Reflect.getOwnPropertyDescriptor(getEmbeddingProviders(), prop);
+  }
+});
 
 /**
  * Get providers sorted by priority
@@ -104,7 +132,7 @@ export const embeddingProviders: Record<string, EmbeddingProviderConfig> = {
 export function getProvidersByPriority(): Array<
   [string, EmbeddingProviderConfig]
 > {
-  return Object.entries(embeddingProviders).sort(
+  return Object.entries(getEmbeddingProviders()).sort(
     ([, a], [, b]) => a.priority - b.priority,
   );
 }
@@ -113,7 +141,7 @@ export function getProvidersByPriority(): Array<
  * Check if provider has required API key or is a local provider
  */
 export function hasApiKey(providerName: string): boolean {
-  const config = embeddingProviders[providerName];
+  const config = getEmbeddingProviders()[providerName];
   
   if (!config) {
     return false;
