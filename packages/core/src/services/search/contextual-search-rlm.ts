@@ -478,7 +478,10 @@ export class ContextualSearchRLM {
     } = {},
   ): Promise<SearchResult[]> {
     const maxResults = options.maxResults || 10;
-    const minScore = options.minScore || 0.3;
+    // Lower minScore for longer queries (conceptual searches)
+    const queryWords = query.split(/\s+/).filter(w => w.length > 3).length;
+    const defaultMinScore = queryWords >= 3 ? 0.2 : 0.3; // Lower threshold for conceptual queries
+    const minScore = options.minScore !== undefined ? options.minScore : defaultMinScore;
     const explainScores = options.explainScores || false;
     const includeFilters = options.includeFilters;
     const excludeFilters = options.excludeFilters;
@@ -488,6 +491,9 @@ export class ContextualSearchRLM {
       query,
       projectId,
       maxResults,
+      minScore,
+      defaultMinScore,
+      queryWords,
       explainScores,
       includeFilters,
       excludeFilters,
@@ -537,19 +543,23 @@ export class ContextualSearchRLM {
     }
 
     try {
+      // For conceptual queries, fetch more results for better fusion
+      const fetchMultiplier = queryWords >= 3 ? 3 : 2;
+      
       // Busca paralela em vector store e keyword search
       const [vectorResults, keywordResults] = await Promise.all([
-        this.vectorStore.search(query, maxResults * 2, projectId),
+        this.vectorStore.search(query, maxResults * fetchMultiplier, projectId),
         this.keywordSearch.searchWithFilter(
           query,
           { projectId },
-          maxResults * 2,
+          maxResults * fetchMultiplier,
         ),
       ]);
 
       logger.debug("Search results retrieved", {
         vectorCount: vectorResults.length,
         keywordCount: keywordResults.length,
+        fetchMultiplier,
       });
 
       // Combina resultados usando RRF (with score explanation if requested)
@@ -662,17 +672,26 @@ export class ContextualSearchRLM {
       return codePatterns.some((pattern) => pattern.test(text));
     };
 
+    // Detect if query contains multiple related terms (conceptual search)
+    const isConceptualQuery = (text: string): boolean => {
+      const words = text.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+      return words.length >= 3; // 3+ meaningful words suggests conceptual search
+    };
+
     // Check if this is a code-focused query
     const isCodeQuery = hasCodePattern(query);
+    const isConceptual = isConceptualQuery(query);
 
     // Keyword weight multiplier (higher = more weight to keyword results)
-    // For code queries: 2.5x boost to keyword matches
+    // For code queries: 2.5x boost to keyword matches (exact code patterns)
+    // For conceptual queries: 0.7x (favor semantic/vector search)
     // For general queries: 1.0x (equal weight)
-    const KEYWORD_BOOST = isCodeQuery ? 2.5 : 1.0;
+    const KEYWORD_BOOST = isCodeQuery ? 2.5 : isConceptual ? 0.7 : 1.0;
 
     logger.debug("RRF fusion parameters", {
       query,
       isCodeQuery,
+      isConceptual,
       keywordBoost: KEYWORD_BOOST,
       vectorResults: resultSets[0]?.length || 0,
       keywordResults: resultSets[1]?.length || 0,
