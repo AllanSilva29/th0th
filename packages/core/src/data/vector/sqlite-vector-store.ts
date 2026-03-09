@@ -137,8 +137,8 @@ export class SQLiteVectorStore implements IVectorStore {
     if (documents.length === 0) return;
 
     // Sub-batch size: max texts per single embedBatch() call to Ollama
-    // Ollama bge-m3 crashes on large batches (50+), 8 is safe and fast
-    const EMBED_SUB_BATCH_SIZE = 8;
+    // Ollama bge-m3 can handle larger batches now with rate limiting removed
+    const EMBED_SUB_BATCH_SIZE = 16; // Increased from 8 for better throughput
 
     const insertStmt = this.db.prepare(`
       INSERT OR REPLACE INTO vector_documents 

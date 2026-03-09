@@ -191,7 +191,7 @@ export class ContextualSearchRLM {
       let errors = 0;
 
       // Processa arquivos em batches para não sobrecarregar
-      const BATCH_SIZE = 10;
+      const BATCH_SIZE = 20; // Increased from 10 for better throughput
       let processedFiles = 0;
       for (let i = 0; i < filteredFiles.length; i += BATCH_SIZE) {
         const batch = filteredFiles.slice(i, i + BATCH_SIZE);

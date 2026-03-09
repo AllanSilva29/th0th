@@ -145,7 +145,7 @@ export class AISDKEmbeddingProvider implements EmbeddingProvider {
   
   // Ollama rate limiting: Queue to prevent overwhelming the server
   private static ollamaQueue: Promise<any> = Promise.resolve();
-  private static readonly OLLAMA_DELAY_MS = 50; // 50ms between requests
+  private static readonly OLLAMA_DELAY_MS = 0; // No delay - Ollama can handle concurrent requests
 
   constructor(
     private readonly config: EmbeddingProviderConfig,
@@ -216,10 +216,10 @@ export class AISDKEmbeddingProvider implements EmbeddingProvider {
    * so we can afford a higher character limit.
    *
    * Token estimation: ~4 chars/token for English text, ~2-3 for code.
-   * 4000 chars ≈ 1000-2000 tokens, well within 8192 limit.
+   * 8000 chars ≈ 2000-4000 tokens, well within 8192 limit.
    */
   private truncateText(text: string): string {
-    const MAX_CHARS = 4000; // ~1000-2000 tokens, safe for 8192 token context
+    const MAX_CHARS = 8000; // ~2000-4000 tokens, safe for 8192 token context
     
     if (text.length <= MAX_CHARS) {
       return text;
